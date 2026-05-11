@@ -1,0 +1,87 @@
+mysql> 
+mysql> -- Create database
+mysql> CREATE DATABASE IF NOT EXISTS company_db;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> USE company_db;
+Database changed
+mysql> -- Drop table if exists (for re-run)
+mysql> DROP TABLE IF EXISTS employees;
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+mysql> -- Create table
+mysql> CREATE TABLE employees (
+    ->     id INT PRIMARY KEY,
+    ->     name VARCHAR(50),
+    ->     salary INT
+    -> );
+Query OK, 0 rows affected (0.18 sec)
+
+mysql> 
+mysql> -- Insert sample data
+mysql> INSERT INTO employees VALUES
+    -> (1, 'Amit', 30000),
+    -> (2, 'Neha', 40000),
+    -> (3, 'Raj', 35000),
+    -> (4, 'Priya', 45000);
+Query OK, 4 rows affected (0.04 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+mysql> SELECT * FROM employees;
++----+-------+--------+
+| id | name  | salary |
++----+-------+--------+
+|  1 | Amit  |  30000 |
+|  2 | Neha  |  40000 |
+|  3 | Raj   |  35000 |
+|  4 | Priya |  45000 |
++----+-------+--------+
+4 rows in set (0.00 sec)
+
+mysql> DELIMITER $$
+mysql> -- Stored Procedure with Cursor
+mysql> CREATE PROCEDURE update_salary()
+    -> BEGIN
+    ->     DECLARE done INT DEFAULT 0;
+    ->     DECLARE emp_id INT;
+    ->     DECLARE emp_salary INT;
+    -> 
+    ->     DECLARE emp_cursor CURSOR FOR
+    ->         SELECT id, salary FROM employees;
+    -> 
+    ->     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+    -> 
+    ->     OPEN emp_cursor;
+    -> 
+    ->     read_loop: LOOP
+    ->         FETCH emp_cursor INTO emp_id, emp_salary;
+    -> 
+    ->         IF done THEN
+    ->             LEAVE read_loop;
+    ->         END IF;
+    -> 
+    ->         UPDATE employees
+    ->         SET salary = emp_salary * 1.10
+    ->         WHERE id = emp_id;
+    -> 
+    ->     END LOOP;
+    -> CLOSE emp_cursor;
+    -> END $$
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> DELIMITER ;
+mysql> CALL update_salary();
+Query OK, 0 rows affected (0.11 sec)
+
+mysql> -- Show updated data
+mysql> SELECT * FROM employees;
++----+-------+--------+
+| id | name  | salary |
++----+-------+--------+
+|  1 | Amit  |  33000 |
+|  2 | Neha  |  44000 |
+|  3 | Raj   |  38500 |
+|  4 | Priya |  49500 |
++----+-------+--------+
+4 rows in set (0.00 sec)
+
