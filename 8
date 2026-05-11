@@ -1,0 +1,68 @@
+CREATE DATABASE lib;
+USE lib;
+-- Main table
+CREATE TABLE library (
+    bno INT(5),
+    bname VARCHAR(40),
+    author VARCHAR(30),
+    allowed_days INT(5)
+);
+-- Audit table
+CREATE TABLE library_audit (
+    action_type VARCHAR(15),
+    bno INT(5),
+    bname VARCHAR(40),
+    author VARCHAR(30),
+    old_allowed_days INT(5),
+    new_allowed_days INT(5),
+    action_time DATETIME
+);
+INSERT INTO library VALUES
+(1, 'Database Systems', 'Connally T', 10),
+(2, 'System Programming', 'John Donovan', 20),
+(3, 'Computer Network & Internet', 'Douglas E. Comer', 18),
+(4, 'Agile Project Management', 'Ken Schwaber', 24),
+(5, 'Python for Data Analysis', 'Wes McKinney', 12);
+DELIMITER //
+-- BEFORE UPDATE Trigger
+CREATE TRIGGER before_library_update
+BEFORE UPDATE ON library
+FOR EACH ROW
+BEGIN
+    INSERT INTO library_audit
+    VALUES ('BEFORE UPDATE', OLD.bno, OLD.bname, OLD.author, OLD.allowed_days, NEW.allowed_days, NOW());
+END;
+//
+-- AFTER UPDATE Trigger
+CREATE TRIGGER after_library_update
+AFTER UPDATE ON library
+FOR EACH ROW
+BEGIN
+    INSERT INTO library_audit
+    VALUES ('AFTER UPDATE', NEW.bno, NEW.bname, NEW.author, OLD.allowed_days, NEW.allowed_days, NOW());
+END;
+//
+-- BEFORE DELETE Trigger
+CREATE TRIGGER before_library_delete
+BEFORE DELETE ON library
+FOR EACH ROW
+BEGIN
+    INSERT INTO library_audit
+    VALUES ('BEFORE DELETE', OLD.bno, OLD.bname, OLD.author, OLD.allowed_days, NULL, NOW());
+END;
+//
+-- AFTER DELETE Trigger
+CREATE TRIGGER after_library_delete
+AFTER DELETE ON library
+FOR EACH ROW
+BEGIN
+    INSERT INTO library_audit
+    VALUES ('AFTER DELETE', OLD.bno, OLD.bname, OLD.author, OLD.allowed_days, NULL, NOW());
+END;
+//
+DELIMITER ;
+-- Test
+UPDATE library SET allowed_days = 15 WHERE bno = 1;
+DELETE FROM library WHERE bno = 2;
+SELECT * FROM library;
+SELECT * FROM library_audit;
